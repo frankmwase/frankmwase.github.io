@@ -1,0 +1,49 @@
+---
+title: "Building the MW-JSON Fintech Interoperability Standard"
+date: "2026-06-15"
+summary: "How we designed a unified protocol for fintech interoperability in Malawi, bridging the gap between legacy bank systems and modern mobile money APIs."
+tags: ["Architecture", "Fintech", "Go", "Standards"]
+slug: "building-mw-json"
+---
+
+# Building the MW-JSON Standard
+
+Interoperability in the African fintech landscape is notoriously difficult. In Malawi, connecting a modern digital wallet to a legacy banking system often meant writing custom integration layers for every single partner.
+
+This is why I built the **MW-JSON Standard**.
+
+## The Problem with Custom Integrations
+
+When building `malawi-pay-standard`, we noticed a pattern:
+1. Bank A uses XML/SOAP.
+2. Telco B uses a proprietary REST API.
+3. Startup C uses GraphQL.
+
+Every new connection scaled at $O(n^2)$ complexity.
+
+```go
+// The old way: A tangled mess of custom parsers
+func HandlePayment(provider string, payload []byte) error {
+    switch provider {
+    case "bank_a":
+        return parseSOAP(payload)
+    case "telco_b":
+        return parseREST(payload)
+    default:
+        return ErrUnknownProvider
+    }
+}
+```
+
+## The Solution: A Unified Protocol
+
+MW-JSON provides a single, strongly-typed JSON schema for all financial transactions in the region. It handles currency conversion, KYC metadata, and asynchronous callbacks natively.
+
+> The goal wasn't to replace existing APIs, but to provide a translation layer that everyone could agree on.
+
+### Key Features
+- **Deterministic**: Exactly-once semantics via idempotent transaction IDs.
+- **Fast**: Built in Go, the translation layer adds less than 2ms of overhead.
+- **Secure**: Native support for asymmetric payload signing.
+
+Check out the [GitHub repository](https://github.com/frankmwase/malawi-pay-standard) to see the full specification.

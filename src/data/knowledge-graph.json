@@ -1,0 +1,87 @@
+{
+  "nodes": [
+    {
+      "id": "healthcare",
+      "label": "Healthcare Platforms",
+      "type": "concept",
+      "terms": ["hospital", "clinic", "doctor", "health", "patient", "medical"],
+      "summary": "Building systems for health data management and telemedicine."
+    },
+    {
+      "id": "fintech",
+      "label": "Fintech & Payments",
+      "type": "concept",
+      "terms": ["finance", "money", "bank", "pay", "transaction", "fintech"],
+      "summary": "Financial technology systems, payment gateways, and core banking integrations."
+    },
+    {
+      "id": "ecommerce",
+      "label": "E-Commerce & Supply Chain",
+      "type": "concept",
+      "terms": ["shop", "store", "importing", "china", "order", "delivery", "logistics"],
+      "summary": "Digital marketplaces and logistics management for cross-border trade."
+    },
+    {
+      "id": "hipaa",
+      "label": "HIPAA Compliance",
+      "type": "advisory",
+      "terms": ["hipaa", "privacy", "health data"],
+      "summary": "International standard for protecting sensitive patient health information."
+    },
+    {
+      "id": "data_act",
+      "label": "Malawi Data Protection Act",
+      "type": "law",
+      "terms": ["data protection", "law", "privacy", "malawi"],
+      "summary": "Malawi's legislative framework for data privacy and protection of personal information."
+    },
+    {
+      "id": "mw_json",
+      "label": "MW-JSON Standard",
+      "type": "fact",
+      "terms": ["standard", "interoperability", "mw-json", "protocol"],
+      "summary": "A unified protocol for fintech interoperability within Malawi, facilitating seamless cross-platform transactions."
+    },
+    {
+      "id": "reserve_bank",
+      "label": "RBM Guidelines",
+      "type": "advisory",
+      "terms": ["rbm", "reserve bank", "regulation", "compliance"],
+      "summary": "Directives and regulations issued by the Reserve Bank of Malawi for digital financial services."
+    },
+    {
+      "id": "supply_chain",
+      "label": "Import & Customs Laws",
+      "type": "law",
+      "terms": ["import", "customs", "mra", "tax", "tariffs"],
+      "summary": "Regulations governing the importation of goods into Malawi, including MRA tariff structures."
+    },
+    {
+      "id": "education",
+      "label": "EdTech Platforms",
+      "type": "concept",
+      "terms": ["education", "school", "learning", "student", "teacher", "skillrise"],
+      "summary": "Digital learning environments and educational management systems."
+    },
+    {
+      "id": "accessibility",
+      "label": "Digital Accessibility Standards",
+      "type": "advisory",
+      "terms": ["a11y", "accessibility", "inclusion", "wcag"],
+      "summary": "Guidelines ensuring digital platforms are usable by people with various disabilities."
+    }
+  ],
+  "edges": [
+    { "source": "healthcare", "target": "hipaa", "type": "REQUIRES_COMPLIANCE" },
+    { "source": "healthcare", "target": "data_act", "type": "REQUIRES_COMPLIANCE" },
+    { "source": "fintech", "target": "mw_json", "type": "IMPLEMENTS_STANDARD" },
+    { "source": "fintech", "target": "data_act", "type": "REQUIRES_COMPLIANCE" },
+    { "source": "fintech", "target": "reserve_bank", "type": "REGULATED_BY" },
+    { "source": "ecommerce", "target": "supply_chain", "type": "REGULATED_BY" },
+    { "source": "ecommerce", "target": "data_act", "type": "REQUIRES_COMPLIANCE" },
+    { "source": "ecommerce", "target": "fintech", "type": "DEPENDS_ON" },
+    { "source": "education", "target": "data_act", "type": "REQUIRES_COMPLIANCE" },
+    { "source": "education", "target": "accessibility", "type": "SHOULD_IMPLEMENT" },
+    { "source": "healthcare", "target": "accessibility", "type": "SHOULD_IMPLEMENT" }
+  ]
+}
