@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, ShieldAlert, Network, ArrowRight, BookOpen, Scale, Info, PlayCircle } from 'lucide-react';
 import * as d3 from 'd3';
-import Fuse from 'fuse.js';
+
 import graphData from '@/data/knowledge-graph.json';
 
 interface Node extends d3.SimulationNodeDatum {
@@ -41,13 +41,7 @@ export default function KnowledgeMesh() {
   const [activeAdvisories, setActiveAdvisories] = useState<Node[]>([]);
   const svgRef = useRef<SVGSVGElement>(null);
   
-  // Initialize Fuse for fuzzy search
-  const fuse = useMemo(() => new Fuse(graphData.nodes, {
-    keys: ['label', 'terms', 'summary'],
-    threshold: 0.3,
-  }), []);
-
-  // Search logic (Simulated Semantic Search + BFS)
+  // Search logic (Server-side Semantic Search + BFS)
   useEffect(() => {
     if (!searchQuery.trim()) {
       setActiveConcept(null);
@@ -55,36 +49,21 @@ export default function KnowledgeMesh() {
       return;
     }
 
-    const results = fuse.search(searchQuery);
-    
-    // Find the first concept match
-    const primaryMatch = results.find(res => res.item.type === 'concept')?.item as Node;
-
-    if (primaryMatch) {
-      setActiveConcept(primaryMatch);
-      
-      // Simulate BFS: Find connected advisories/laws/facts
-      const connectedNodeIds = graphData.edges
-        .filter(e => e.source === primaryMatch.id || e.target === primaryMatch.id)
-        .map(e => e.source === primaryMatch.id ? e.target : e.source);
-        
-      const connectedNodes = graphData.nodes.filter(
-        n => connectedNodeIds.includes(n.id) && n.type !== 'concept'
-      ) as Node[];
-      
-      setActiveAdvisories(connectedNodes);
-    } else {
-      // If only an advisory matches, just show it
-      const advMatch = results[0]?.item as Node;
-      if (advMatch) {
-        setActiveConcept(null);
-        setActiveAdvisories([advMatch]);
-      } else {
-        setActiveConcept(null);
-        setActiveAdvisories([]);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/portfolio-api/mesh/search?q=${encodeURIComponent(searchQuery)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setActiveConcept(data.primary_match || null);
+          setActiveAdvisories(data.advisories || []);
+        }
+      } catch (err) {
+        console.error("Search API error", err);
       }
-    }
-  }, [searchQuery, fuse]);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // D3 Visualization
   useEffect(() => {
