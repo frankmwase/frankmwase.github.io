@@ -148,12 +148,7 @@ export default function Hero() {
 
       {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
-        {/* Location badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-midnight-800/60 border border-midnight-600/30 text-sm text-midnight-300 mb-8 animate-fade-in">
-          <MapPin size={14} className="text-terracotta-400" />
-          Malawi, Africa
-          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-        </div>
+     
 
         {/* Name */}
         <h1 className="font-display font-bold text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight mb-6 animate-fade-in">
