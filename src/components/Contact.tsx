@@ -1,6 +1,6 @@
 'use client';
 
-import { Mail, MapPin, Send, Github, Twitter } from 'lucide-react';
+import { Mail, MapPin, Send, Github, Twitter, Phone } from 'lucide-react';
 
 export default function Contact() {
   return (
@@ -35,6 +35,18 @@ export default function Contact() {
                     <p className="text-sm text-midnight-400 mb-1">Email</p>
                     <a href="mailto:princefranklinemwase@gmail.com" className="text-lg font-medium text-midnight-100 hover:text-terracotta-400 transition-colors">
                       princefranklinemwase@gmail.com
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-midnight-800/50 flex items-center justify-center shrink-0 border border-midnight-700/30">
+                    <Phone className="text-teal-400" size={24} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-midnight-400 mb-1">Phone Number</p>
+                    <a href="tel:+265980143334" className="text-lg font-medium text-midnight-100 hover:text-terracotta-400 transition-colors">
+                      +265980143334
                     </a>
                   </div>
                 </div>

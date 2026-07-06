@@ -23,7 +23,7 @@ const fallbackProjects: Repo[] = [
     name: 'malawi-pay-standard',
     description: 'A unified standard for fintech interoperability in Malawi (MW-JSON).',
     html_url: 'https://github.com/frankmwase/malawi-pay-standard',
-    homepage: null,
+    homepage: 'http://princemwase.me/malawi-pay-standard/',
     stargazers_count: 8,
     language: 'Go',
     owner: { login: 'frankmwase' }
@@ -100,20 +100,20 @@ export default function Projects() {
           fetch('https://api.github.com/users/frankmwase/repos?sort=updated&per_page=10'),
           fetch('https://api.github.com/users/princemwase/repos?sort=updated&per_page=10')
         ]);
-        
+
         if (!frankRes.ok || !princeRes.ok) {
           throw new Error('API rate limit exceeded');
         }
 
         const frankData: Repo[] = await frankRes.json();
         const princeData: Repo[] = await princeRes.json();
-        
+
         // Combine, filter out forks, and sort by stars
         const combined = [...frankData, ...princeData]
           .filter(repo => !repo.name.toLowerCase().includes('github.io')) // exclude portfolio
           .sort((a, b) => b.stargazers_count - a.stargazers_count)
           .slice(0, 6); // Take top 6
-          
+
         if (combined.length > 0) {
           setProjects(combined);
         } else {
@@ -177,7 +177,7 @@ export default function Projects() {
                 <h3 className="font-display font-semibold text-xl text-midnight-100 mb-3 group-hover:text-teal-300 transition-colors line-clamp-1">
                   {repo.name}
                 </h3>
-                
+
                 <p className="text-midnight-300 text-sm mb-6 flex-grow line-clamp-3">
                   {repo.description || 'A software engineering project built to solve complex distributed problems.'}
                 </p>
@@ -187,7 +187,7 @@ export default function Projects() {
                     <span className={`w-2.5 h-2.5 rounded-full ${languageColors[repo.language] || 'bg-midnight-400'}`} />
                     <span className="text-xs font-mono text-midnight-300">{repo.language || 'Unknown'}</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-1.5 text-midnight-300">
                     <Star size={14} className={repo.stargazers_count > 0 ? 'text-gold-400 fill-gold-400/20' : ''} />
                     <span className="text-xs font-mono">{repo.stargazers_count}</span>

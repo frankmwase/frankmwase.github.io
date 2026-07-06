@@ -6,8 +6,8 @@ const experiences = [
   {
     id: 1,
     role: 'Full Stack Engineer & Distributed Systems Architect',
-    company: 'Independent / Open Source',
-    period: '2022 - Present',
+    company: 'Northedge / Open Source / Founding SKill Rise',
+    period: '2025 - Present',
     description: 'Focusing on building high-performance, distributed systems and standards for the African tech ecosystem.',
     achievements: [
       'Authored the MW-JSON Standard, a unified protocol for fintech interoperability in Malawi.',
@@ -20,9 +20,12 @@ const experiences = [
     id: 2,
     role: 'Senior Software Engineer',
     company: 'Various Tech Companies',
-    period: '2019 - 2022',
+    period: '2021 - 2025',
     description: 'Led development of scalable backend services and modern frontend applications.',
     achievements: [
+      'Lead Developer at sitbec limited',
+      'Software Engineer at QubedCare',
+      'Technical LEad at NorthEdge Analytics',
       'Architected microservices using Go and Node.js to handle high-throughput transactions.',
       'Mentored junior engineers and established CI/CD pipelines and testing standards.',
       'Optimized database queries and implemented caching strategies with Redis.',
@@ -31,13 +34,14 @@ const experiences = [
   {
     id: 3,
     role: 'Software Engineer',
-    company: 'Tech Startups',
+    company: 'Coming Up',
     period: '2016 - 2019',
     description: 'Full stack development focusing on MVP delivery and rapid iteration.',
     achievements: [
-      'Built interactive web applications using React and Vue.js.',
+      'Focused on building interactive web applications using React and Vue.js.',
       'Developed RESTful APIs using Python, PHP, and Node.js.',
-      'Managed cloud deployments and server infrastructure.',
+      'Developed Cross platform applications using Electron and ionic',
+      'Developed ML tools for chichewa parts of speech tagger'
     ],
   },
 ];
