@@ -51,7 +51,8 @@ export default function KnowledgeMesh() {
 
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/portfolio-api/mesh/search?q=${encodeURIComponent(searchQuery)}`);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://20.164.18.43';
+        const res = await fetch(`${apiUrl}/portfolio-api/mesh/search?q=${encodeURIComponent(searchQuery)}`);
         if (res.ok) {
           const data = await res.json();
           setActiveConcept(data.primary_match || null);
