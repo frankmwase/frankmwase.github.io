@@ -1,0 +1,34 @@
+name: Knowledge Mesh proposal
+description: Propose a sourced graph entry or relationship for maintainer review
+body:
+  - type: markdown
+    attributes:
+      value: "Proposals are not published until the maintainer verifies and merges them. A merged draft is visibly unverified and never a compliance recommendation."
+  - type: input
+    id: entry
+    attributes:
+      label: Proposed entry and jurisdiction
+      description: Include the exact title and whether it is a law, guidance, concept or project proposal.
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Primary source URLs and relevant passages
+      description: Provide official publications, effective date if applicable, and which statements they support.
+    validations:
+      required: true
+  - type: textarea
+    id: relationship
+    attributes:
+      label: Relationship reasoning and applicability
+      description: Explain the proposed source/target, why the relationship holds, exclusions, and whether it is direct or contextual.
+    validations:
+      required: true
+  - type: dropdown
+    id: status
+    attributes:
+      label: Verification status requested
+      options: [Draft for review, Request verified status with primary sources]
+    validations:
+      required: true

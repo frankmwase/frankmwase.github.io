@@ -30,6 +30,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Validate graph before publication
+        working-directory: backend
+        run: |
+          go run ./cmd/validate ../src/data/knowledge-graph.json
+          go test ./...
       - name: Restore cache
         uses: actions/cache@v4
         with:
@@ -39,8 +49,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
+      - name: Validate frontend and graph
+        run: npx tsc --noEmit
       - name: Build with Next.js
+        env:
+          # Set the repository variable only after the independent HTTPS API passes smoke tests.
+          NEXT_PUBLIC_MESH_API_URL: ${{ vars.MESH_API_URL }}
         run: npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

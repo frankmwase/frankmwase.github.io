@@ -2,67 +2,78 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"strings"
 
+	"github.com/frankmwase/portfolio-api/embeddings"
+	"github.com/frankmwase/portfolio-api/graph"
 	"github.com/frankmwase/portfolio-api/store"
 )
 
+type SearchStore interface {
+	Mesh() (graph.Graph, error)
+	Search(string, []float32, string) (*store.Match, error)
+}
+type Embedder interface {
+	Embed(string) ([]float32, error)
+}
 type Handler struct {
-	store *store.PostgresStore
+	store    SearchStore
+	embedder Embedder
 }
 
-func NewHandler(s *store.PostgresStore) *Handler {
-	return &Handler{
-		store: s,
-	}
-}
+func NewHandler(s SearchStore, e Embedder) *Handler { return &Handler{store: s, embedder: e} }
 
 type SearchResponse struct {
-	PrimaryMatch *store.Node  `json:"primary_match"`
-	Advisories   []store.Node `json:"advisories"`
+	PrimaryMatch *graph.Node  `json:"primary_match"`
+	Paths        []graph.Path `json:"paths"`
+	Mode         string       `json:"mode"`
 }
 
+func (h *Handler) HandleGraph(w http.ResponseWriter, r *http.Request) {
+	g, err := h.store.Mesh()
+	if err != nil {
+		http.Error(w, "Graph unavailable", 500)
+		return
+	}
+	respondJSON(w, 200, g)
+}
 func (h *Handler) HandleSearch(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query().Get("q")
-	if query == "" {
-		http.Error(w, "Missing query parameter 'q'", http.StatusBadRequest)
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	if q == "" || len(q) > 200 {
+		http.Error(w, "Query must be between 1 and 200 characters", 400)
 		return
 	}
-
-	// In a real implementation with onnxruntime_go, we would:
-	// 1. Embed query: vec, err := embedder.Embed(query)
-	// 2. primaryNode, err := h.store.SearchNodesVector(vec)
-	
-	// For now, use the text fallback
-	primaryNode, err := h.store.SearchNodesText(query)
+	var vec []float32
+	if h.embedder != nil {
+		var err error
+		vec, err = h.embedder.Embed(q)
+		if err != nil {
+			log.Printf("semantic inference failed; lexical fallback: %v", err)
+		}
+	}
+	match, err := h.store.Search(q, vec, embeddings.Version)
 	if err != nil {
-		// If no primary node is found, return empty result gracefully
-		respondJSON(w, http.StatusOK, SearchResponse{
-			PrimaryMatch: nil,
-			Advisories:   []store.Node{},
-		})
+		log.Printf("search error: %v", err)
+		http.Error(w, "Search unavailable", 500)
 		return
 	}
-
-	// BFS traversal for advisories
-	advisories, err := h.store.GetConnectedAdvisories(primaryNode.ID)
-	if err != nil {
-		http.Error(w, "Failed to traverse graph", http.StatusInternalServerError)
-		return
+	resp := SearchResponse{Paths: []graph.Path{}, Mode: "lexical fallback"}
+	if match != nil {
+		g, err := h.store.Mesh()
+		if err != nil {
+			http.Error(w, "Graph unavailable", 500)
+			return
+		}
+		resp.PrimaryMatch = &match.Node
+		resp.Paths = g.Paths(match.Node.ID, 3)
+		resp.Mode = match.Mode
 	}
-
-	resp := SearchResponse{
-		PrimaryMatch: primaryNode,
-		Advisories:   advisories,
-	}
-
-	respondJSON(w, http.StatusOK, resp)
+	respondJSON(w, 200, resp)
 }
-
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
+func respondJSON(w http.ResponseWriter, status int, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-	}
+	_ = json.NewEncoder(w).Encode(v)
 }

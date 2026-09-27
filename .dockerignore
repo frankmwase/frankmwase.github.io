@@ -1,0 +1,10 @@
+.git
+node_modules
+.next
+out
+backend/onnxruntime-linux-x64-1.17.1.tgz
+backend/onnxruntime-linux-x64-1.17.1/include
+backend/lib
+*.pem
+**/.env
+**/.env.*

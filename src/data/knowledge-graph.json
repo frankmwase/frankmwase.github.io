@@ -1,87 +1,33 @@
 {
   "nodes": [
-    {
-      "id": "healthcare",
-      "label": "Healthcare Platforms",
-      "type": "concept",
-      "terms": ["hospital", "clinic", "doctor", "health", "patient", "medical"],
-      "summary": "Building systems for health data management and telemedicine."
-    },
-    {
-      "id": "fintech",
-      "label": "Fintech & Payments",
-      "type": "concept",
-      "terms": ["finance", "money", "bank", "pay", "transaction", "fintech"],
-      "summary": "Financial technology systems, payment gateways, and core banking integrations."
-    },
-    {
-      "id": "ecommerce",
-      "label": "E-Commerce & Supply Chain",
-      "type": "concept",
-      "terms": ["shop", "store", "importing", "china", "order", "delivery", "logistics"],
-      "summary": "Digital marketplaces and logistics management for cross-border trade."
-    },
-    {
-      "id": "hipaa",
-      "label": "HIPAA Compliance",
-      "type": "advisory",
-      "terms": ["hipaa", "privacy", "health data"],
-      "summary": "International standard for protecting sensitive patient health information."
-    },
-    {
-      "id": "data_act",
-      "label": "Malawi Data Protection Act",
-      "type": "law",
-      "terms": ["data protection", "law", "privacy", "malawi"],
-      "summary": "Malawi's legislative framework for data privacy and protection of personal information."
-    },
-    {
-      "id": "mw_json",
-      "label": "MW-JSON Standard",
-      "type": "fact",
-      "terms": ["standard", "interoperability", "mw-json", "protocol"],
-      "summary": "A unified protocol for fintech interoperability within Malawi, facilitating seamless cross-platform transactions."
-    },
-    {
-      "id": "reserve_bank",
-      "label": "RBM Guidelines",
-      "type": "advisory",
-      "terms": ["rbm", "reserve bank", "regulation", "compliance"],
-      "summary": "Directives and regulations issued by the Reserve Bank of Malawi for digital financial services."
-    },
-    {
-      "id": "supply_chain",
-      "label": "Import & Customs Laws",
-      "type": "law",
-      "terms": ["import", "customs", "mra", "tax", "tariffs"],
-      "summary": "Regulations governing the importation of goods into Malawi, including MRA tariff structures."
-    },
-    {
-      "id": "education",
-      "label": "EdTech Platforms",
-      "type": "concept",
-      "terms": ["education", "school", "learning", "student", "teacher", "skillrise"],
-      "summary": "Digital learning environments and educational management systems."
-    },
-    {
-      "id": "accessibility",
-      "label": "Digital Accessibility Standards",
-      "type": "advisory",
-      "terms": ["a11y", "accessibility", "inclusion", "wcag"],
-      "summary": "Guidelines ensuring digital platforms are usable by people with various disabilities."
-    }
+    { "id": "healthcare", "label": "Healthcare Platforms", "type": "concept", "terms": ["hospital", "clinic", "doctor", "health", "patient", "medical", "telemedicine"], "summary": "Software for health records and remote care in Malawi.", "jurisdiction": "Malawi", "applicability": "Health technology projects", "verified": true, "citations": [] },
+    { "id": "fintech", "label": "Fintech & Payments", "type": "concept", "terms": ["finance", "money", "bank", "pay", "transaction", "fintech", "mobile money", "wallet"], "summary": "Payment, banking and mobile-money software in Malawi.", "jurisdiction": "Malawi", "applicability": "Financial technology projects", "verified": true, "citations": [] },
+    { "id": "ecommerce", "label": "E-Commerce & Supply Chain", "type": "concept", "terms": ["shop", "store", "importing", "order", "delivery", "logistics", "customs"], "summary": "Online commerce and cross-border trade systems.", "jurisdiction": "Malawi", "applicability": "Commerce and import projects", "verified": true, "citations": [] },
+    { "id": "education", "label": "EdTech Platforms", "type": "concept", "terms": ["education", "school", "learning", "student", "teacher"], "summary": "Digital learning and school-management systems.", "jurisdiction": "Malawi", "applicability": "Education technology projects", "verified": true, "citations": [] },
+    { "id": "agritech", "label": "Agriculture Technology", "type": "concept", "terms": ["agriculture", "farming", "crops", "agritech", "farmers"], "summary": "Digital services supporting farming and agricultural supply chains.", "jurisdiction": "Malawi", "applicability": "Agricultural technology projects", "verified": true, "citations": [] },
+    { "id": "mobile_money", "label": "Mobile Money Integrations", "type": "concept", "terms": ["mobile money", "wallet", "payments", "airtel money", "mpamba"], "summary": "Integrations with mobile payment providers; provider-specific requirements need independent review.", "jurisdiction": "Malawi", "applicability": "Payment integrations", "verified": true, "citations": [] },
+    { "id": "payment_act", "label": "Payment Systems Act (No. 15 of 2016)", "type": "law", "terms": ["payment systems", "payment law", "reserve bank", "rbm", "fintech"], "summary": "RBM publishes the Payment Systems Act; check the Act and current regulations for the specific service and licensing position.", "jurisdiction": "Malawi", "applicability": "Potentially relevant to payment-system operators; determine scope from primary text", "verified": true, "citations": [{ "title": "RBM: Payment Systems Act (No. 15 of 2016)", "url": "https://www.rbm.mw/Home/GetContentFile/?ContentID=12256" }] },
+    { "id": "rbm_reports", "label": "RBM National Payments System Reports", "type": "fact", "terms": ["rbm", "payment", "national payments system", "nps", "mobile money"], "summary": "RBM publishes National Payments System reports about Malawi's payment landscape; reports are informational, not standalone legal obligations.", "jurisdiction": "Malawi", "applicability": "Research about payment-system developments", "verified": true, "citations": [{ "title": "RBM: Payment Systems publications", "url": "https://www.rbm.mw/PaymentSystems/" }] },
+    { "id": "mra_customs", "label": "MRA Customs Resources", "type": "fact", "terms": ["import", "customs", "mra", "tax", "tariff", "cross border"], "summary": "MRA publishes customs downloads and tariff resources; use the current applicable notices and tariff classification for each shipment.", "jurisdiction": "Malawi", "applicability": "Import and customs research", "verified": true, "citations": [{ "title": "MRA: Customs and Excise downloads", "url": "https://www.mra.mw/custom-downloads" }] },
+    { "id": "hipaa", "label": "HIPAA (United States)", "type": "law", "terms": ["hipaa", "us health privacy", "patient privacy"], "summary": "US federal health-information rules for covered entities and business associates; not a Malawi law. Assess US applicability separately.", "jurisdiction": "United States", "applicability": "Only where US HIPAA applies", "verified": true, "citations": [{ "title": "US HHS: HIPAA for Professionals", "url": "https://www.hhs.gov/hipaa/for-professionals/index.html" }] },
+    { "id": "mw_json", "label": "MW-JSON (proposed project standard)", "type": "fact", "terms": ["mw-json", "interoperability", "protocol", "proposed standard"], "summary": "A project-proposed interoperability format; it is not a Malawi law or mandated national standard.", "jurisdiction": "Project proposal", "applicability": "Voluntary experimentation only", "verified": true, "citations": [{ "title": "MW-JSON project", "url": "https://github.com/frankmwase/malawi-pay-standard" }] },
+    { "id": "accessibility", "label": "WCAG 2.2 Accessibility Guidance", "type": "advisory", "terms": ["a11y", "accessibility", "inclusion", "wcag"], "summary": "W3C WCAG 2.2 is international web accessibility guidance; this entry does not claim it is mandatory Malawi law.", "jurisdiction": "International guidance", "applicability": "Web interface design", "verified": true, "citations": [{ "title": "W3C: Web Content Accessibility Guidelines 2.2", "url": "https://www.w3.org/TR/WCAG22/" }] },
+    { "id": "data_act", "label": "Malawi Data Protection Act (review pending)", "type": "law", "terms": ["data protection", "privacy", "malawi"], "summary": "Draft research entry: confirm the official text, commencement and applicable provisions before making compliance claims.", "jurisdiction": "Malawi", "applicability": "Pending source and legal review", "verified": false, "citations": [] },
+    { "id": "eta", "label": "Electronic Transactions Act (review pending)", "type": "law", "terms": ["electronic", "transactions", "digital signatures", "ecommerce"], "summary": "Draft research entry awaiting primary-text and scope verification.", "jurisdiction": "Malawi", "applicability": "Pending source and legal review", "verified": false, "citations": [] }
   ],
   "edges": [
-    { "source": "healthcare", "target": "hipaa", "type": "REQUIRES_COMPLIANCE" },
-    { "source": "healthcare", "target": "data_act", "type": "REQUIRES_COMPLIANCE" },
-    { "source": "fintech", "target": "mw_json", "type": "IMPLEMENTS_STANDARD" },
-    { "source": "fintech", "target": "data_act", "type": "REQUIRES_COMPLIANCE" },
-    { "source": "fintech", "target": "reserve_bank", "type": "REGULATED_BY" },
-    { "source": "ecommerce", "target": "supply_chain", "type": "REGULATED_BY" },
-    { "source": "ecommerce", "target": "data_act", "type": "REQUIRES_COMPLIANCE" },
-    { "source": "ecommerce", "target": "fintech", "type": "DEPENDS_ON" },
-    { "source": "education", "target": "data_act", "type": "REQUIRES_COMPLIANCE" },
-    { "source": "education", "target": "accessibility", "type": "SHOULD_IMPLEMENT" },
-    { "source": "healthcare", "target": "accessibility", "type": "SHOULD_IMPLEMENT" }
+    { "source": "fintech", "target": "payment_act", "type": "MAY_BE_RELEVANT", "reason": "Payment-system activities may fall within the Act; assess the specific service.", "verified": true },
+    { "source": "mobile_money", "target": "payment_act", "type": "MAY_BE_RELEVANT", "reason": "Payment integration may involve regulated parties; not an automatic obligation.", "verified": true },
+    { "source": "fintech", "target": "rbm_reports", "type": "BACKGROUND", "reason": "RBM reports give payment-system context, not rules.", "verified": true },
+    { "source": "ecommerce", "target": "mra_customs", "type": "MAY_BE_RELEVANT", "reason": "Customs resources are relevant if goods cross borders.", "verified": true },
+    { "source": "ecommerce", "target": "fintech", "type": "RELATED_TECH", "reason": "E-commerce may use payment services.", "verified": true },
+    { "source": "fintech", "target": "mobile_money", "type": "RELATED_TECH", "reason": "Mobile money is one possible fintech integration.", "verified": true },
+    { "source": "fintech", "target": "mw_json", "type": "OPTIONAL_PROPOSAL", "reason": "MW-JSON is a voluntary project proposal, not mandatory.", "verified": true },
+    { "source": "healthcare", "target": "hipaa", "type": "CONDITIONAL_US", "reason": "Only if US HIPAA jurisdiction and covered-entity rules apply.", "verified": true },
+    { "source": "healthcare", "target": "data_act", "type": "RESEARCH_ONLY", "reason": "Legal details require primary-source review.", "verified": false },
+    { "source": "ecommerce", "target": "eta", "type": "RESEARCH_ONLY", "reason": "Pending verification of primary legislation.", "verified": false },
+    { "source": "education", "target": "accessibility", "type": "GOOD_PRACTICE", "reason": "WCAG offers accessible design guidance.", "verified": true },
+    { "source": "healthcare", "target": "accessibility", "type": "GOOD_PRACTICE", "reason": "WCAG offers accessible design guidance.", "verified": true },
+    { "source": "agritech", "target": "mobile_money", "type": "RELATED_TECH", "reason": "Agricultural services may integrate mobile payments.", "verified": true }
   ]
 }

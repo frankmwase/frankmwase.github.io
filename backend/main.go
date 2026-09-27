@@ -14,50 +14,59 @@ import (
 	"github.com/go-chi/cors"
 
 	"github.com/frankmwase/portfolio-api/api"
+	"github.com/frankmwase/portfolio-api/embeddings"
+	"github.com/frankmwase/portfolio-api/graph"
 	"github.com/frankmwase/portfolio-api/store"
 )
 
 func main() {
 	log.Println("Starting Portfolio API...")
-
-	// 1. Initialize Database
-	dbURL := getEnv("DATABASE_URL", "postgres://portfolio_user:portfolio_password@db:5432/portfolio_db?sslmode=disable")
-	
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Fatal("DATABASE_URL is required")
+	}
 	pgStore, err := store.NewPostgresStore(dbURL)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer pgStore.Close()
 
-	// 2. Initialize Embedder
-	// embedder, err := embeddings.NewONNXEmbedder("/app/models/all-MiniLM-L6-v2.onnx")
-	// if err != nil {
-	// 	log.Printf("Warning: Failed to initialize ONNX embedder: %v. Falling back to mock embeddings.", err)
-	// }
-	// We will use a mock embedder for now to ensure the API builds and runs smoothly
-	// without needing complex tokenization dictionaries locally.
-	
-	// 3. Initialize Handlers
-	handler := api.NewHandler(pgStore)
+	g, err := graph.Load(getEnv("GRAPH_PATH", "../src/data/knowledge-graph.json"))
+	if err != nil {
+		log.Fatalf("Graph validation failed: %v", err)
+	}
+	var model *embeddings.Model
+	model, err = embeddings.NewModel(getEnv("MODEL_PATH", "/app/models/model.onnx"), getEnv("VOCAB_PATH", "/app/models/vocab.txt"), getEnv("ONNX_LIBRARY", "/usr/lib/libonnxruntime.so"))
+	if err != nil {
+		log.Printf("MiniLM unavailable: %v; serving labeled lexical fallback", err)
+	} else {
+		defer model.Close()
+	}
+	var embed func(string) ([]float32, error)
+	version := ""
+	if model != nil {
+		embed = model.Embed
+		version = embeddings.Version
+	}
+	if err = pgStore.SyncGraph(g, embed, version); err != nil {
+		log.Fatalf("Graph sync failed: %v", err)
+	}
+	handler := api.NewHandler(pgStore, model)
 
 	// 4. Setup Router
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://princemwase.me", "https://frankmwase.github.io", "http://localhost:3000"},
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300,
+		AllowedOrigins: []string{getEnv("SITE_ORIGIN", "https://princemwase.me")},
+		AllowedMethods: []string{"GET", "OPTIONS"},
+		AllowedHeaders: []string{"Accept", "Content-Type"},
+		MaxAge:         300,
 	}))
 
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("OK"))
-	})
-	
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("OK")) })
 	r.Route("/api", func(r chi.Router) {
+		r.Get("/mesh/graph", handler.HandleGraph)
 		r.Get("/mesh/search", handler.HandleSearch)
 	})
 

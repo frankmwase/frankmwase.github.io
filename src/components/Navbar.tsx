@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, X, Network, BookOpen, Home, User, Briefcase, Mail } from 'lucide-react';
+import { Menu, X, Network, BookOpen, Home, User, Briefcase, Mail, GitPullRequest } from 'lucide-react';
 
 const navLinks = [
   { href: '#home', label: 'Home', icon: Home },
@@ -10,6 +10,7 @@ const navLinks = [
   { href: '#projects', label: 'Projects', icon: Briefcase },
   { href: '/blog/', label: 'Blog', icon: BookOpen },
   { href: '/knowledge/', label: 'Knowledge Mesh', icon: Network },
+  { href: 'https://github.com/frankmwase/frankmwase.github.io/issues/new/choose', label: 'Contribute', icon: GitPullRequest },
   { href: '#contact', label: 'Contact', icon: Mail },
 ];
 

@@ -1,32 +1,34 @@
-version: '3.8'
-
 services:
   db:
+    # Preserve the existing data volume's PostgreSQL major version; verify before pinning/upgrading this image.
     image: ankane/pgvector:latest
     environment:
       POSTGRES_USER: portfolio_user
-      POSTGRES_PASSWORD: portfolio_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in a private environment file}
       POSTGRES_DB: portfolio_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./migrations:/docker-entrypoint-initdb.d
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio_user -d portfolio_db"]
+      interval: 5s
+      retries: 10
     restart: unless-stopped
-    ports:
-      - "5433:5432" # Map to 5433 to avoid conflicts with existing postgres
 
   api:
-    build: .
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
     environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USER=portfolio_user
-      - DB_PASSWORD=portfolio_password
-      - DB_NAME=portfolio_db
-      - API_PORT=3001
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL with URL-encoded password in private environment file}
+      API_PORT: 3001
+      SITE_ORIGIN: ${SITE_ORIGIN:-https://princemwase.me}
+      GRAPH_PATH: /app/knowledge-graph.json
     ports:
-      - "3001:3001"
+      - "127.0.0.1:${API_BIND_PORT:?Choose and verify a free loopback port}:3001"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

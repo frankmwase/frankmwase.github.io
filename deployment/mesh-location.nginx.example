@@ -1,0 +1,18 @@
+# Add inside an EXISTING HTTPS server block for your dedicated API hostname.
+# Replace SELECTED_LOOPBACK_PORT only after checking listeners; do not enable this file as a server block.
+location = /api/mesh/graph {
+    limit_except GET { deny all; }
+    proxy_pass http://127.0.0.1:SELECTED_LOOPBACK_PORT;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+location = /api/mesh/search {
+    limit_except GET { deny all; }
+    proxy_pass http://127.0.0.1:SELECTED_LOOPBACK_PORT;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}

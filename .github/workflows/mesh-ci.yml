@@ -1,0 +1,25 @@
+name: Validate Knowledge Mesh
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npx tsc --noEmit
+      - name: Validate graph and backend
+        working-directory: backend
+        run: |
+          go run ./cmd/validate ../src/data/knowledge-graph.json
+          go test ./...

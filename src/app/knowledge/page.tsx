@@ -25,25 +25,22 @@ export default function KnowledgePage() {
               Malawi <span className="gradient-text-teal">Knowledge Mesh</span>
             </h1>
             <p className="text-lg text-midnight-300 max-w-3xl mx-auto leading-relaxed">
-              An interactive graph database mapping the relationships between technologies, 
-              local laws, and regional standards in Malawi. Search for concepts to see 
-              triggered compliance advisories.
+              Explore reviewed sources connecting technologies and guidance relevant to Malawi.
+              Draft entries are labeled; relationships are research leads, not legal advice.
             </p>
           </div>
 
           <KnowledgeMesh />
-          
+
           <div className="mt-16 glass-card p-8 text-center max-w-3xl mx-auto">
-            <h3 className="text-xl font-display font-semibold text-midnight-100 mb-4">
-              How it works
-            </h3>
+            <h3 className="text-xl font-display font-semibold text-midnight-100 mb-4">How it works</h3>
             <p className="text-midnight-300 text-sm leading-relaxed mb-6">
-              This is a Phase 1 client-side simulation. In Phase 2, this will be powered by a 
-              Go API running a hybrid semantic search. It will convert your query into a vector 
-              using <code className="text-terracotta-400 bg-midnight-900 px-1.5 py-0.5 rounded">all-MiniLM-L6-v2</code>, 
-              perform a Cosine Similarity search in PostgreSQL via <code className="text-terracotta-400 bg-midnight-900 px-1.5 py-0.5 rounded">pgvector</code>, 
-              and then execute a Breadth-First Search (BFS) graph traversal to pull related compliance laws.
+              The graph and search results come from the same reviewed dataset. Search combines
+              local MiniLM similarity with ranked text matching when available and labels lexical
+              fallback explicitly. Ordered paths show how entries are related, not automatic obligations.
+              Verify applicability with the linked primary sources before acting.
             </p>
+            <a href="https://github.com/frankmwase/frankmwase.github.io/issues/new/choose" target="_blank" rel="noopener noreferrer" className="text-teal-300 underline">Propose a sourced addition</a>
           </div>
         </div>
       </div>

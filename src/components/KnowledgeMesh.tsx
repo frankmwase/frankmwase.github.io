@@ -1,25 +1,31 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, ShieldAlert, Network, ArrowRight, BookOpen, Scale, Info, PlayCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, ShieldAlert, Network, ArrowRight, BookOpen, Scale, Info } from 'lucide-react';
 import * as d3 from 'd3';
 
-import graphData from '@/data/knowledge-graph.json';
-
+interface Citation { title: string; url: string }
 interface Node extends d3.SimulationNodeDatum {
   id: string;
   label: string;
   type: string;
   terms: string[];
   summary: string;
-  audio_url?: string;
+  jurisdiction: string;
+  applicability: string;
+  verified: boolean;
+  citations: Citation[];
 }
-
 interface Edge extends d3.SimulationLinkDatum<Node> {
   source: string | Node;
   target: string | Node;
   type: string;
+  reason: string;
+  verified: boolean;
 }
+interface Path { nodes: Node[]; edges: Edge[]; recommendation: boolean }
+interface Graph { nodes: Node[]; edges: Edge[] }
+const apiBase = process.env.NEXT_PUBLIC_MESH_API_URL?.replace(/\/$/, '');
 
 const typeIcons: Record<string, React.ElementType> = {
   concept: BookOpen,
@@ -37,47 +43,64 @@ const typeColors: Record<string, { bg: string; border: string; text: string }> =
 
 export default function KnowledgeMesh() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [graph, setGraph] = useState<Graph | null>(null);
   const [activeConcept, setActiveConcept] = useState<Node | null>(null);
-  const [activeAdvisories, setActiveAdvisories] = useState<Node[]>([]);
+  const [paths, setPaths] = useState<Path[]>([]);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [mode, setMode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [view, setView] = useState<'graph' | 'list'>('graph');
+  const [graphWidth, setGraphWidth] = useState(0);
   const svgRef = useRef<SVGSVGElement>(null);
-  
-  // Search logic (Server-side Semantic Search + BFS)
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setActiveConcept(null);
-      setActiveAdvisories([]);
-      return;
-    }
+  const activeAdvisories = paths.filter(p => p.recommendation).map(p => p.nodes[p.nodes.length - 1]);
 
+  useEffect(() => {
+    if (!svgRef.current || view !== 'graph') return;
+    const observer = new ResizeObserver(entries => setGraphWidth(entries[0].contentRect.width));
+    observer.observe(svgRef.current);
+    return () => observer.disconnect();
+  }, [view]);
+
+  useEffect(() => {
+    if (!apiBase) { setError('Search is not configured yet. Please try again later.'); return; }
+    const controller = new AbortController();
+    fetch(`${apiBase}/api/mesh/graph`, { signal: controller.signal })
+      .then(async res => { if (!res.ok) throw new Error('Graph service unavailable'); return res.json(); })
+      .then((data: Graph) => { if (!controller.signal.aborted) { setGraph(data); setError(''); } })
+      .catch(() => { if (!controller.signal.aborted) setError('Could not load the graph. Please retry later.'); });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    if (!apiBase || !searchQuery.trim()) { setActiveConcept(null); setPaths([]); setMode(''); setLoading(false); return; }
+    const controller = new AbortController();
+    setLoading(true); setError(''); setActiveConcept(null); setPaths([]); setSelectedNode(null);
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/portfolio-api/mesh/search?q=${encodeURIComponent(searchQuery)}`);
-        if (res.ok) {
-          const data = await res.json();
-          setActiveConcept(data.primary_match || null);
-          setActiveAdvisories(data.advisories || []);
-        }
-      } catch (err) {
-        console.error("Search API error", err);
-      }
+        const res = await fetch(`${apiBase}/api/mesh/search?q=${encodeURIComponent(searchQuery.trim())}`, { signal: controller.signal });
+        if (!res.ok) throw new Error('Search service unavailable');
+        const data: { primary_match: Node | null; paths: Path[]; mode: string } = await res.json();
+        if (!controller.signal.aborted) { setActiveConcept(data.primary_match); setPaths(data.paths); setMode(data.mode); }
+      } catch {
+        if (!controller.signal.aborted) setError('Search failed. Please try again.');
+      } finally { if (!controller.signal.aborted) setLoading(false); }
     }, 300);
-    
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); controller.abort(); };
   }, [searchQuery]);
 
-  // D3 Visualization
+  // D3 visualization of the same reviewed dataset returned by the API.
   useEffect(() => {
-    if (!svgRef.current) return;
+    if (!svgRef.current || !graph || view !== 'graph') return;
 
     const width = svgRef.current.clientWidth;
     const height = svgRef.current.clientHeight;
 
     const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove(); // Clear previous render
+    svg.selectAll("*").remove();
 
-    // Deep copy data for D3 to mutate safely
-    const nodes: Node[] = JSON.parse(JSON.stringify(graphData.nodes));
-    const links: Edge[] = JSON.parse(JSON.stringify(graphData.edges));
+    const nodes: Node[] = JSON.parse(JSON.stringify(graph.nodes));
+    const links: Edge[] = JSON.parse(JSON.stringify(graph.edges));
 
     const simulation = d3.forceSimulation<Node>(nodes)
       .force("link", d3.forceLink<Node, Edge>(links).id(d => d.id).distance(120))
@@ -96,8 +119,7 @@ export default function KnowledgeMesh() {
         
         // Highlight active edges
         if (activeConcept) {
-          const isActiveEdge = (sourceId === activeConcept.id && activeAdvisories.some(a => a.id === targetId)) ||
-                               (targetId === activeConcept.id && activeAdvisories.some(a => a.id === sourceId));
+          const isActiveEdge = paths.some(p => p.edges.some(e => e.source === sourceId && e.target === targetId));
           return isActiveEdge ? "#1a9fab" : "#394562";
         }
         return "#394562";
@@ -107,8 +129,7 @@ export default function KnowledgeMesh() {
         const targetId = typeof d.target === 'object' ? d.target.id : d.target;
         
         if (activeConcept) {
-          const isActiveEdge = (sourceId === activeConcept.id && activeAdvisories.some(a => a.id === targetId)) ||
-                               (targetId === activeConcept.id && activeAdvisories.some(a => a.id === sourceId));
+          const isActiveEdge = paths.some(p => p.edges.some(e => e.source === sourceId && e.target === targetId));
           return isActiveEdge ? 3 : 1;
         }
         return 1;
@@ -118,8 +139,7 @@ export default function KnowledgeMesh() {
         const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
         const targetId = typeof d.target === 'object' ? d.target.id : d.target;
         if (activeConcept) {
-          const isActiveEdge = (sourceId === activeConcept.id && activeAdvisories.some(a => a.id === targetId)) ||
-                               (targetId === activeConcept.id && activeAdvisories.some(a => a.id === sourceId));
+          const isActiveEdge = paths.some(p => p.edges.some(e => e.source === sourceId && e.target === targetId));
           return isActiveEdge ? "5,5" : "none";
         }
         return "none";
@@ -131,6 +151,7 @@ export default function KnowledgeMesh() {
       .data(nodes)
       .join("g")
       .attr("cursor", "pointer")
+      .on('click', (_event, datum) => setSelectedNode(datum))
       .call(d3.drag<SVGGElement, Node>()
         .on("start", dragstarted)
         .on("drag", dragged)
@@ -207,122 +228,55 @@ export default function KnowledgeMesh() {
       event.subject.fy = null;
     }
 
-    return () => {
-      simulation.stop();
-    };
-  }, [activeConcept, activeAdvisories]);
+    return () => { simulation.stop(); };
+  }, [graph, view, graphWidth, activeConcept, paths]);
 
-  // Audio player stub
-  const playAudio = (url: string | undefined) => {
-    if (!url) return;
-    console.log("Playing audio reference:", url);
-    // In Phase 2, this will link to R2 object storage URL
-    alert("Audio playback will connect to R2 storage in Phase 2.");
-  };
-
+  const details = selectedNode || activeConcept;
   return (
-    <div className="w-full flex flex-col lg:flex-row gap-6 h-[700px]">
-      
-      {/* Left: Graph Canvas */}
-      <div className="flex-grow glass-card relative overflow-hidden flex flex-col">
-        <div className="absolute top-6 left-6 right-6 z-10 flex flex-col gap-4">
-          <h2 className="text-sm font-bold tracking-wider text-midnight-400 uppercase flex items-center gap-2">
-            <Network size={16} /> Mesh Visualization
-          </h2>
-          
+    <div className="w-full flex flex-col lg:flex-row gap-6 min-h-[700px]">
+      <div className="flex-1 glass-card relative overflow-hidden flex flex-col min-h-[550px]">
+        <div className="relative z-10 p-5 flex flex-col gap-3 bg-midnight-950/80">
+          <h2 className="text-sm font-bold tracking-wider text-midnight-300 uppercase flex items-center gap-2"><Network size={16} /> Explore the mesh</h2>
+          <label htmlFor="mesh-search" className="sr-only">Search the knowledge mesh</label>
           <div className="relative max-w-md">
-            <input
-              type="text"
-              placeholder="Try: 'hospital', 'importing', 'fintech'..."
-              className="w-full px-5 py-3 pl-11 rounded-xl bg-midnight-950/80 border border-midnight-700/50 focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/20 text-midnight-100 outline-none transition-all duration-300 backdrop-blur-md"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-midnight-400" size={18} />
+            <input id="mesh-search" type="search" maxLength={200} placeholder="Try: mobile money, importing, health..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              className="w-full px-5 py-3 pl-11 rounded-xl bg-midnight-950 border border-midnight-700 focus:ring-2 focus:ring-teal-500 text-midnight-100 outline-none" />
+            <Search aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 text-midnight-400" size={18} />
           </div>
+          <div className="flex gap-2" role="group" aria-label="Graph display mode">
+            {(['graph', 'list'] as const).map(item => <button key={item} type="button" aria-pressed={view === item} onClick={() => setView(item)}
+              className={`px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 ${view === item ? 'bg-teal-700 text-white' : 'bg-midnight-800 text-midnight-100'}`}>{item === 'graph' ? 'Graph' : 'Accessible list'}</button>)}
+          </div>
+          <div role="status" aria-live="polite" className="text-sm text-midnight-200">{error || (loading ? 'Searching…' : mode ? `Search mode: ${mode}` : graph ? `${graph.nodes.length} reviewed and draft entries loaded` : 'Loading graph…')}</div>
         </div>
-        
-        <svg ref={svgRef} className="w-full h-full absolute inset-0 cursor-grab active:cursor-grabbing" />
-        
-        {/* Graph Legend */}
-        <div className="absolute bottom-6 left-6 z-10 flex gap-4 text-xs font-mono bg-midnight-950/80 backdrop-blur-md p-3 rounded-lg border border-midnight-800">
-          <div className="flex items-center gap-1.5 text-teal-300"><span className="w-3 h-3 rounded-full bg-teal-500/20 border border-teal-500"/> Concept</div>
-          <div className="flex items-center gap-1.5 text-red-300"><span className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500"/> Advisory</div>
-          <div className="flex items-center gap-1.5 text-gold-400"><span className="w-3 h-3 rounded-full bg-gold-400/20 border border-gold-400"/> Law</div>
-        </div>
+        <svg ref={svgRef} aria-hidden="true" className={view === 'graph' ? 'flex-1 w-full min-h-[380px] cursor-grab active:cursor-grabbing' : 'hidden'} />
+        {view === 'list' && <ul className="overflow-y-auto flex-1 p-5" aria-label="Knowledge entries">
+          {graph?.nodes.map(n => <li key={n.id}><button type="button" onClick={() => setSelectedNode(n)}
+            className="block w-full text-left mb-2 p-3 rounded-lg border border-midnight-700 text-midnight-100 hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <span className="font-semibold">{n.label}</span> — {n.type} · {n.verified ? 'Reviewed' : 'Unverified draft'}
+          </button></li>)}
+        </ul>}
       </div>
-
-      {/* Right: Results Panel */}
-      <div className="w-full lg:w-96 glass-card p-6 flex flex-col overflow-y-auto custom-scrollbar">
-        <h2 className="text-xl font-display font-bold text-midnight-100 mb-6 border-b border-midnight-800 pb-4">
-          Execution Path
-        </h2>
-        
-        {activeConcept ? (
-          <div className="mb-8 animate-slide-in-right">
-            <span className="text-xs font-mono font-semibold tracking-wider text-teal-500 uppercase mb-2 block">Primary Match</span>
-            <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/30">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 font-bold text-teal-300">
-                  <BookOpen size={18} />
-                  {activeConcept.label}
-                </div>
-                {activeConcept.audio_url && (
-                  <button onClick={() => playAudio(activeConcept.audio_url)} className="text-teal-400 hover:text-teal-300 transition-colors">
-                    <PlayCircle size={18} />
-                  </button>
-                )}
-              </div>
-              <p className="text-sm text-teal-100/80 mb-3">{activeConcept.summary}</p>
-              <div className="flex flex-wrap gap-1">
-                {activeConcept.terms.slice(0, 3).map(term => (
-                  <span key={term} className="text-[10px] px-2 py-0.5 rounded bg-teal-500/20 text-teal-200 uppercase">{term}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : searchQuery.trim() ? (
-           <div className="text-sm text-midnight-400 italic mb-8 p-4 bg-midnight-900/50 rounded-xl border border-midnight-800">
-             Analyzing semantic vectors for "{searchQuery}"...
-           </div>
-        ) : (
-           <div className="text-sm text-midnight-400 italic mb-8 p-4 bg-midnight-900/50 rounded-xl border border-midnight-800">
-             Awaiting search query to begin traversal...
-           </div>
-        )}
-
-        {activeAdvisories.length > 0 && (
-          <div className="animate-slide-up" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
-            <span className="text-xs font-mono font-semibold tracking-wider text-terracotta-400 uppercase mb-3 flex items-center gap-1.5">
-              <ArrowRight size={14} /> Triggered Advisories
-            </span>
-            <div className="flex flex-col gap-4 mt-2">
-              {activeAdvisories.map(adv => {
-                const Icon = typeIcons[adv.type] || Info;
-                const colors = typeColors[adv.type] || typeColors.fact;
-                
-                return (
-                  <div key={adv.id} className="p-4 rounded-xl border flex gap-3 items-start transition-all" style={{ backgroundColor: colors.bg, borderColor: colors.border }}>
-                     <Icon className="shrink-0 mt-0.5" size={18} color={colors.border} />
-                     <div className="flex-grow">
-                       <div className="flex items-center justify-between mb-1">
-                         <div className="font-bold text-sm" style={{ color: colors.text }}>{adv.label}</div>
-                         {adv.audio_url && (
-                           <button onClick={() => playAudio(adv.audio_url)} className="hover:opacity-80 transition-opacity" style={{ color: colors.border }}>
-                             <PlayCircle size={14} />
-                           </button>
-                         )}
-                       </div>
-                       <p className="text-xs opacity-90 leading-relaxed" style={{ color: colors.text }}>{adv.summary}</p>
-                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-
+      <section className="w-full lg:w-[28rem] glass-card p-6 overflow-y-auto max-h-[800px]" aria-label="Search and exploration details">
+        <h2 className="text-xl font-display font-bold text-midnight-100 mb-4">Execution paths</h2>
+        <p className="text-xs text-midnight-300 mb-4">Paths show relationships, not legal conclusions. Indirect links never imply compliance duties. Check primary sources and applicability.</p>
+        {details ? <article className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/30 mb-4 text-midnight-100">
+          <h3 className="font-bold flex items-center gap-2"><BookOpen size={18} />{details.label}</h3>
+          <p className="text-sm mt-2">{details.summary}</p>
+          <p className="text-xs mt-2">{details.jurisdiction} · {details.applicability} · {details.verified ? 'Reviewed' : 'Unverified draft — not a recommendation'}</p>
+          {details.citations.map(c => <a key={c.url} className="block text-teal-300 underline text-sm mt-2" href={c.url} target="_blank" rel="noopener noreferrer">Source: {c.title}</a>)}
+        </article> : <p className="text-sm text-midnight-300 mb-5">{loading ? 'Searching…' : searchQuery ? 'No result found. Try another term.' : 'Search or select an entry to explore.'}</p>}
+        {paths.length > 0 && <ol className="space-y-4 text-midnight-100">{paths.map(p => {
+          const target = p.nodes[p.nodes.length - 1]; const Icon = typeIcons[target.type] || Info;
+          return <li key={target.id} className="rounded-xl border border-midnight-700 p-4">
+            <h3 className="font-semibold flex gap-2 items-center"><Icon size={16} />{target.label}</h3>
+            <p className="text-xs text-midnight-300 mt-1">{p.recommendation ? 'Potentially relevant — verify applicability' : target.verified ? 'Context only — not a compliance requirement' : 'Unverified draft — not a recommendation'}</p>
+            <ol className="mt-3 text-sm space-y-1">{p.edges.map((edge, i) => <li key={`${edge.source}-${edge.target}`}><ArrowRight aria-hidden="true" size={14} className="inline mr-1" />{p.nodes[i].label} → {p.nodes[i + 1].label}: {edge.reason}</li>)}</ol>
+            <p className="text-sm mt-2">{target.summary}</p>
+            {target.citations.map(c => <a key={c.url} className="block text-teal-300 underline text-sm mt-2" href={c.url} target="_blank" rel="noopener noreferrer">Source: {c.title}</a>)}
+          </li>;
+        })}</ol>}
+      </section>
     </div>
   );
 }
